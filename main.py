@@ -16,9 +16,9 @@ except ImportError:
 
 @register("helloworld", "YourName", "一个消息审核插件", "1.0.0")
 class MyPlugin(Star):
-    def __init__(self, context: Context, config: AstrBotConfig):
+    def __init__(self, context: Context, config: AstrBotConfig = None):
         super().__init__(context)
-        self.config = config
+        self.config = config if config is not None else {}
 
         # Setup warnings file path
         if get_astrbot_data_path:
