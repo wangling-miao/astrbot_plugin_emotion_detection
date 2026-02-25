@@ -14,20 +14,20 @@ try:
 except ImportError:
     get_astrbot_data_path = None
 
-@register("helloworld", "YourName", "一个消息审核插件", "1.0.0")
+@register("astrbot_plugin_emotion_detection", "亡灵", "消息情绪检测与内容审核插件", "1.0.0")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig = None):
-        super().__init__(context)
+        super().__init__(context, config)
         self.config = config if config is not None else {}
 
         # Setup warnings file path
         if get_astrbot_data_path:
             # get_astrbot_data_path might return a string, so wrap in Path
-            self.data_dir = pathlib.Path(get_astrbot_data_path()) / "plugin_data" / "helloworld"
+            self.data_dir = pathlib.Path(str(get_astrbot_data_path())) / "plugin_data" / "astrbot_plugin_emotion_detection"
         else:
             # Fallback for older versions or if import fails
             # Assuming we are running from AstrBot root
-            self.data_dir = pathlib.Path(os.getcwd()) / "data" / "plugin_data" / "helloworld"
+            self.data_dir = pathlib.Path(os.getcwd()) / "data" / "plugin_data" / "astrbot_plugin_emotion_detection"
 
         if not self.data_dir.exists():
             self.data_dir.mkdir(parents=True, exist_ok=True)
