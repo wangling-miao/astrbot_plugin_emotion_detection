@@ -22,7 +22,8 @@ class MyPlugin(Star):
 
         # Setup warnings file path
         if get_astrbot_data_path:
-            self.data_dir = get_astrbot_data_path() / "plugin_data" / "helloworld"
+            # get_astrbot_data_path might return a string, so wrap in Path
+            self.data_dir = pathlib.Path(get_astrbot_data_path()) / "plugin_data" / "helloworld"
         else:
             # Fallback for older versions or if import fails
             # Assuming we are running from AstrBot root
