@@ -1,8 +1,12 @@
 {
-    "admin_qq": {
-        "description": "管理员QQ号",
-        "type": "string",
-        "hint": "接收警告信息的管理员QQ号"
+    "admin_qq_list": {
+        "description": "管理员QQ号列表",
+        "type": "list",
+        "items": {
+            "type": "string"
+        },
+        "default": [],
+        "hint": "接收警告信息的管理员QQ号列表"
     },
     "llm_provider": {
         "description": "用于审核的大模型提供商",

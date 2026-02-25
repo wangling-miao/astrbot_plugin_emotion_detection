@@ -55,14 +55,21 @@ class MyPlugin(Star):
             return
 
         # Ignore bot's own messages
-        # Depending on platform, sender_id might be the same as self_id
         sender_id = event.get_sender_id()
         if hasattr(event.message_obj, "self_id") and sender_id == event.message_obj.self_id:
             return
 
+        # Get admin list from config
+        admin_qq_list = self.config.get("admin_qq_list", [])
+        if not isinstance(admin_qq_list, list):
+            # Fallback if user configured a single string by mistake, though schema enforces list
+            if isinstance(admin_qq_list, str):
+                admin_qq_list = [admin_qq_list]
+            else:
+                admin_qq_list = []
+
         # Ignore admin messages to prevent loops if admin triggers it
-        admin_qq = self.config.get("admin_qq")
-        if admin_qq and sender_id == admin_qq:
+        if sender_id in admin_qq_list:
             return
 
         provider_id = self.config.get("llm_provider")
@@ -81,7 +88,7 @@ Respond ONLY with a JSON object in this format (no markdown):
 {{
   "alert": true,
   "category": "suicide" | "homicide" | "illegal" | "porn" | "violence" | "other",
-  "reason": "short explanation"
+  "reason": "Explain the reason in Chinese (Simplified)"
 }}
 OR
 {{
@@ -125,26 +132,29 @@ OR
                 # Write to file asynchronously
                 await asyncio.to_thread(self._write_warning, warn_entry)
 
-                # Notify Admin
-                if admin_qq:
-                    # Construct Unified Message Origin for private message to admin
-                    # Try to get platform name from event, default to aiocqhttp
-                    platform_name = "aiocqhttp"
-                    if hasattr(event, "platform") and event.platform:
-                        platform_name = event.platform.platform_name
+                # Notify Admins
+                # Try to get platform name from event, default to aiocqhttp
+                platform_name = "aiocqhttp"
+                if hasattr(event, "platform") and event.platform:
+                    platform_name = event.platform.platform_name
 
+                msg_content = (f"⚠️ 消息审核警告\n"
+                               f"时间: {warn_entry['time']}\n"
+                               f"用户: {warn_entry['nickname']}({warn_entry['qq']})\n"
+                               f"内容: {warn_entry['content']}\n"
+                               f"类型: {warn_entry['category']}\n"
+                               f"原因: {warn_entry['reason']}")
+
+                for admin_qq in admin_qq_list:
+                    if not admin_qq:
+                        continue
                     umo = f"{platform_name}:private:{admin_qq}"
-
-                    msg = (f"⚠️ 消息审核警告\n"
-                           f"时间: {warn_entry['time']}\n"
-                           f"用户: {warn_entry['nickname']}({warn_entry['qq']})\n"
-                           f"内容: {warn_entry['content']}\n"
-                           f"类型: {warn_entry['category']}\n"
-                           f"原因: {warn_entry['reason']}")
-
-                    await self.context.send_message(umo, [Plain(msg)])
+                    await self.context.send_message(umo, [Plain(msg_content)])
 
         except Exception as e:
             logger.error(f"Error in moderation plugin: {e}")
             import traceback
             logger.error(traceback.format_exc())
+
+        # Note: We do NOT stop event propagation here.
+        # AstrBot will continue to process the message (e.g., reply to the user if applicable).
