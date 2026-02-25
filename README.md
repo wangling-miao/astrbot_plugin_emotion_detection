@@ -1,14 +1,61 @@
-# astrbot-plugin-helloworld
+# astrbot-plugin-moderation
 
-AstrBot 插件模板 / A template plugin for AstrBot plugin feature
+AstrBot 消息审核插件 / Message Moderation Plugin for AstrBot
 
-> [!NOTE]
-> This repo is just a template of [AstrBot](https://github.com/AstrBotDevs/AstrBot) Plugin.
-> 
-> [AstrBot](https://github.com/AstrBotDevs/AstrBot) is an agentic assistant for both personal and group conversations. It can be deployed across dozens of mainstream instant messaging platforms, including QQ, Telegram, Feishu, DingTalk, Slack, LINE, Discord, Matrix, etc. In addition, it provides a reliable and extensible conversational AI infrastructure for individuals, developers, and teams. Whether you need a personal AI companion, an intelligent customer support agent, an automation assistant, or an enterprise knowledge base, AstrBot enables you to quickly build AI applications directly within your existing messaging workflows.
+这个插件使用大语言模型（LLM）对用户发送的消息进行实时审核，旨在检测异常情绪（如自杀倾向）和不当言论（如涉黄、涉暴、违法信息）。
 
-# Supports
+## 功能特性
 
-- [AstrBot Repo](https://github.com/AstrBotDevs/AstrBot)
-- [AstrBot Plugin Development Docs (Chinese)](https://docs.astrbot.app/dev/star/plugin-new.html)
-- [AstrBot Plugin Development Docs (English)](https://docs.astrbot.app/en/dev/star/plugin-new.html)
+1.  **实时监控**: 拦截并分析所有用户发送的消息。
+2.  **LLM 审核**: 利用配置的大模型提供商，根据上下文判断消息是否存在风险。
+3.  **异常检测**:
+    *   严重负面情绪（自杀、自残、杀人倾向）。
+    *   不当内容（违法乱纪、色情、极端暴力）。
+4.  **警告日志**: 将违规记录自动写入插件数据目录下的 `warns.json` 文件中。
+5.  **管理员通知**: 发现风险时，立即向配置的管理员列表发送私聊警告通知（包含时间、用户、内容、原因）。
+6.  **非阻塞设计**: 审核过程异步进行，不影响 AstrBot 的正常对话功能。
+
+## 安装与配置
+
+### 1. 安装插件
+
+将本仓库克隆到 AstrBot 的 `data/plugins/` 目录下，或者通过 AstrBot 的插件管理界面进行安装。
+
+### 2. 配置插件
+
+在 AstrBot 的 WebUI 插件管理界面中，找到 `astrbot-plugin-moderation` (或显示的插件名)，点击配置按钮。
+
+需要配置以下两项：
+
+*   **管理员QQ号列表 (`admin_qq_list`)**:
+    *   类型：列表 (List of Strings)
+    *   说明：填入接收警告通知的管理员 QQ 号。可以配置多个管理员。
+*   **用于审核的大模型提供商 (`llm_provider`)**:
+    *   类型：选择器
+    *   说明：选择一个已在 AstrBot 中配置好的 LLM 提供商。该模型将用于分析消息内容。建议选择理解能力较强且响应速度较快的模型。
+
+## 使用说明
+
+插件启用并配置完成后，将自动在后台运行。
+
+*   当用户发送消息时，插件会静默分析。
+*   如果检测到风险，管理员会收到如下格式的私聊消息：
+    ```
+    ⚠️ 消息审核警告
+    时间: 2023-10-27 10:00:00
+    用户: 张三(12345678)
+    内容: 我不想活了...
+    类型: suicide
+    原因: 用户表达了强烈的自杀意向。
+    ```
+*   同时，`data/plugin_data/helloworld/warns.json` 文件中会增加一条对应的 JSON 记录。
+
+## 注意事项
+
+*   请确保配置的 LLM 提供商有足够的额度。
+*   插件会忽略管理员发送的消息以及机器人自己发送的消息，以防止死循环。
+*   审核结果依赖于 LLM 的判断，可能存在误判或漏判。
+
+## License
+
+MIT
